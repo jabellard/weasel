@@ -27,7 +27,7 @@ namespace Weasel.Postgresql.Tests.Tables
             ddl.ShouldContain("ADD CONSTRAINT fk_state FOREIGN KEY(state_id)");
             ddl.ShouldContain("REFERENCES public.states(id)");
         }
-        
+
         [Fact]
         public void write_fk_ddl_with_on_delete()
         {
@@ -39,14 +39,14 @@ namespace Weasel.Postgresql.Tests.Tables
                 LinkedNames = new []{"id"},
                 OnDelete = CascadeAction.Restrict
             };
-            
-            
+
+
 
             var ddl = fk.ToDDL(table);
             ddl.ShouldContain("ON DELETE RESTRICT");
             ddl.ShouldNotContain("ON UPDATE");
         }
-        
+
         [Fact]
         public void write_fk_ddl_with_on_update()
         {
@@ -58,14 +58,14 @@ namespace Weasel.Postgresql.Tests.Tables
                 LinkedNames = new []{"id"},
                 OnUpdate = CascadeAction.Cascade
             };
-            
-            
+
+
 
             var ddl = fk.ToDDL(table);
             ddl.ShouldNotContain("ON DELETE");
             ddl.ShouldContain("ON UPDATE CASCADE");
         }
-        
+
         [Fact]
         public void write_fk_ddl_with_multiple_columns()
         {
@@ -108,7 +108,7 @@ namespace Weasel.Postgresql.Tests.Tables
             {
 
             };
-            
+
             fk.Parse(definition);
             fk.OnDelete.ShouldBe(onDelete);
             fk.OnUpdate.ShouldBe(onUpdate);
@@ -121,14 +121,14 @@ namespace Weasel.Postgresql.Tests.Tables
             {
 
             };
-            
+
             fk.Parse("FOREIGN KEY (state_id) REFERENCES states(id)");
-            
+
             fk.ColumnNames.Single().ShouldBe("state_id");
             fk.LinkedNames.Single().ShouldBe("id");
             fk.LinkedTable.ShouldBe(new DbObjectName("public","states"));
         }
-        
+
         [Fact]
         public void parse_multiple_column_fk_definition()
         {
@@ -136,12 +136,27 @@ namespace Weasel.Postgresql.Tests.Tables
             {
 
             };
-            
+
             fk.Parse("FOREIGN KEY (state_id, tenant_id) REFERENCES states(id, tenant_id)");
-            
+
             fk.ColumnNames.ShouldBe(new string[]{"state_id", "tenant_id"});
             fk.LinkedNames.ShouldBe(new string[]{"id", "tenant_id"});
             fk.LinkedTable.ShouldBe(new DbObjectName("public","states"));
+        }
+
+        [Fact]
+        public void parse_single_column_fk_definition_with_schema_set_explicitly()
+        {
+            var foreignKey = new ForeignKey("fk_people_state_id");
+            const string definition = "FOREIGN KEY (state_id) REFERENCES states(id)";
+            const string schema = "test";
+
+            foreignKey.Parse(definition, schema);
+
+            foreignKey.ColumnNames.Single().ShouldBe("state_id");
+            foreignKey.LinkedNames.Single().ShouldBe("id");
+            var expectedLinkedTable = new DbObjectName(schema, "states");
+            foreignKey.LinkedTable.ShouldBe(expectedLinkedTable);
         }
     }
 }

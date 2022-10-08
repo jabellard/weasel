@@ -69,7 +69,7 @@ namespace Weasel.Postgresql.Tables
         /// </summary>
         /// <param name="definition"></param>
         /// <exception cref="NotImplementedException"></exception>
-        public void Parse(string definition)
+        public void Parse(string definition, string schema = "public")
         {
             var open1 = definition.IndexOf('(');
             var closed1 = definition.IndexOf(')');
@@ -78,7 +78,7 @@ namespace Weasel.Postgresql.Tables
 
             var open2 = definition.IndexOf('(', closed1);
             var closed2 = definition.IndexOf(')', open2);
-            
+
             LinkedNames = definition.Substring(open2 + 1, closed2 - open2 - 1).ToDelimitedArray(',');
 
 
@@ -86,8 +86,12 @@ namespace Weasel.Postgresql.Tables
             var tableStart = definition.IndexOf(references) + references.Length;
 
             var tableName = definition.Substring(tableStart, open2 - tableStart).Trim();
-            LinkedTable = DbObjectName.Parse(PostgresqlProvider.Instance, tableName);
+            if (!tableName.Contains('.'))
+            {
+                tableName = $"{schema}.{tableName}";
+            }
 
+            LinkedTable = DbObjectName.Parse(PostgresqlProvider.Instance, tableName);
             if (definition.ContainsIgnoreCase("ON DELETE CASCADE"))
             {
                 OnDelete = CascadeAction.Cascade;
@@ -104,7 +108,7 @@ namespace Weasel.Postgresql.Tables
             {
                 OnDelete = CascadeAction.SetDefault;
             }
-            
+
             if (definition.ContainsIgnoreCase("ON UPDATE CASCADE"))
             {
                 OnUpdate = CascadeAction.Cascade;
@@ -121,8 +125,8 @@ namespace Weasel.Postgresql.Tables
             {
                 OnUpdate = CascadeAction.SetDefault;
             }
-            
-            
+
+
         }
 
         public string Name { get; set; }
